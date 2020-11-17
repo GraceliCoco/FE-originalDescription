@@ -1,0 +1,95 @@
+2.为什么vue的组件template不支持多元素节点
+
+<template>
+  <div>Node 1</div>
+  <div>Node 2</div>
+</template> 
+
+如果我们尝试向上案例方式创建一个多节点的template，那么编译器会告诉我们编译出错，因为vue并不支持这种多节点元素的template创建
+
+通常我们会再template的第一层加一个div，
+<template>
+  <div><!--我只是为了哄编译器开心-->
+    <div>Node 1</div>
+    <div>Node 2</div>
+  </div>
+</template>
+而这一层的div是没有什么实际效果的，仅仅只是因为编译需要，所以增加的一个div，那么为什么vue不支持多节点元素的template呢？
+这是因为有状态的组件监测是需要用到虚拟 DOM 的比较算法，而这个是基于单节点的，所以如果template中存在多个根节点，这个虚拟Dom的比较算法是不生效的
+模板渲染过程中，vue官网给出的解释是这样的：‘在底层的实现上，Vue 将模板编译成虚拟 DOM 渲染函数。结合响应系统，Vue 能够智能地计算出最少需要重新渲染多少组件，并把 DOM 操作次数减到最少。’
+
+官方给出的解决方案是：如果你熟悉虚拟 DOM 并且偏爱 JavaScript 的原始力量，你也可以不用模板，直接写渲染 (render) 函数，使用可选的 JSX 语法。或者slot插槽
+像这样：
+TableRows.js
+
+export default {
+  functional: true,
+  render: h => [
+    h('tr', [
+      h('td', 'foo'),
+      h('td', 'bar'),
+    ]),
+    h('tr', [
+      h('td', 'lorem'),
+      h('td', 'ipsum'),
+    ])
+  ];
+});
+main.js
+
+import TableRows from "TableRows";
+
+new Vue({
+  el: '#app',
+  template: `<div id="app">
+                <table>
+                  <table-rows></table-rows>
+                </table>
+              </div>`,
+  components: {
+    TableRows
+  }
+});
+
+也有像React-Fragment的插件 vue-fragment  https://developer.aliyun.com/mirror/npm/package/vue-fragment
+
+通过
+
+import Fragment from 'vue-fragment'
+Vue.use(Fragment.Plugin)
+
+// or
+
+import { Plugin } from 'vue-fragment'
+Vue.use(Plugin)
+
+// …
+
+export const MyComponent {
+  template: '
+  <fragment>
+    <input type="text" v-model="message">
+    <span>{{ message }}</span>
+  </fragment>
+  ',
+  data() { return { message: 'hello world }}
+}
+
+
+在组件中：
+
+import { Fragment } from 'vue-fragment'
+
+export const MyComponent {
+  components: { Fragment },
+  template: '
+  <fragment>
+    <input type="text" v-model="message">
+    <span>{{ message }}</span>
+  </fragment>
+  ',
+  data() { return { message: 'hello world }}
+}
+
+这样就可以解决template中无法创建多节点元素的问题了，
+当然vue3也有了fragment，但这并不冲突，如果你使用的还不是最新的vue3.x的版本，那么用这个插件也可以解决你的问题
