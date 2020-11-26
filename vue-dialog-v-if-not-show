@@ -1,0 +1,36 @@
+## Vue中父组件引用dialog的子组件，设置了v-if，当设定值为true时dialog不显示
+当父组件中引用了弹出框dialog时，直接设置v-if，当设定值为true时子组件dialog没有及时弹出
+
+解决方法如下
+
+父组件中： :visible.sync="showDetail"
+<template>
+    <!-- 分组管理 -->
+    <div class="group-wrap">
+        <detail
+            :visible.sync="showDetail"
+            ref="detail"
+            v-if="showDetail"
+            @close="showDetail = false"
+        ></detail>
+    </div>
+</template>
+
+子组件中 加上v-bind="$attrs" v-on="$listeners"
+<template>
+    <!-- 分组详情，其他页面的分组详情可复用一下代码做小调整即可 -->
+    <s-dialog @ok="$emit('close')"  v-bind="$attrs" v-on="$listeners" :option="dialogOption" ref="dialog" :visible="visible">
+        <common-form :options="formOptions" :data="detailData">
+            <infoscreen ref="detailMap" slot="infoscreen"></infoscreen>
+        </common-form>
+    </s-dialog>
+</template>
+
+但是加上有的时候还是不生效
+
+子组件：props: ['visible'],
+可以在父组件中将visible的值传递给子组件 子组件接受visible属性，这样就一定可以确保visible = true的时候，dialog弹出
+
+
+
+
